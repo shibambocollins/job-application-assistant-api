@@ -36,7 +36,7 @@ public class CVServiceImpl implements CVService {
     }
 
     @Override
-    public CVResponse uploadCV(CVUploadRequest request, String email) {
+    public CVResponse uploadCV(MultipartFile file, String email) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -47,27 +47,26 @@ public class CVServiceImpl implements CVService {
 
         try {
 
-            String fileName =
-                    UUID.randomUUID() + "_" + request.getFile().getOriginalFilename();
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
             Path uploadPath = Paths.get("uploads");
             Files.createDirectories(uploadPath);
 
             Path filePath = uploadPath.resolve(fileName);
-            Files.copy(request.getFile().getInputStream(), filePath);
+            Files.copy(file.getInputStream(), filePath);
 
 
-            String extractedText = pdfExtractionService.extractText(request.getFile());
+            String extractedText = pdfExtractionService.extractText(file);
 
-            Set<String> skills = skillExtractionService.extractSkills(extractedText);
+            String skillsJson = "[]";
 
 
             CV cv = new CV.Builder()
                     .setUserId(user.getId())
                     .setBlobUrl(filePath.toString())
-                    .setOriginalFilename(request.getFile().getOriginalFilename())
+                    .setOriginalFilename(file.getOriginalFilename())
                     .setExtractedText(extractedText)
-                    .setSkillsJson(skills.toString())
+                    .setSkillsJson(skillsJson)
                     .build();
 
             CV saved = cvRepository.save(cv);
@@ -78,42 +77,6 @@ public class CVServiceImpl implements CVService {
             throw new RuntimeException("CV upload failed: " + e.getMessage());
         }
     }
-  /*  @Override
-    public CVUploadResponse uploadFile(MultipartFile file, String email) {
-
-        try {
-
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            String fileName =
-                    UUID.randomUUID() + "_" + file.getOriginalFilename();
-
-            Path uploadPath = Paths.get("uploads");
-
-            Files.createDirectories(uploadPath);
-
-            Path filePath = uploadPath.resolve(fileName);
-
-            Files.copy(file.getInputStream(), filePath);
-
-            CV cv = new CV.Builder()
-                    .setUserId(user.getId())
-                    .setBlobUrl(filePath.toString())
-                    .setOriginalFilename(file.getOriginalFilename())
-                    .build();
-
-            CV saved = cvRepository.save(cv);
-
-            return new CVUploadResponse(
-                    saved.getId(),
-                    saved.getOriginalFilename()
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException("File upload failed"+ e.getMessage());
-        }
-    }*/
 
     @Override
     public CV getCVByUserEmail(String email) {
