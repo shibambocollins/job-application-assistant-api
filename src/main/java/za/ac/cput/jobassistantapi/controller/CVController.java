@@ -31,16 +31,16 @@ public class CVController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<CVUploadResponse> uploadFile(
-            @RequestParam("file") MultipartFile file,
+    public ResponseEntity<CVResponse> uploadCV(
+            @RequestPart("file") MultipartFile file,
             Authentication authentication
     ) {
 
+        CVUploadRequest request = new CVUploadRequest();
+        request.setFile(file);
+
         return ResponseEntity.ok(
-                cvService.uploadFile(
-                        file,
-                        authentication.getName()
-                )
+                cvService.uploadCV(request, authentication.getName())
         );
     }
 
