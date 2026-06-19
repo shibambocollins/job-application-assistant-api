@@ -10,6 +10,8 @@ import za.ac.cput.jobassistantapi.repository.CVRepository;
 import za.ac.cput.jobassistantapi.repository.UserRepository;
 import za.ac.cput.jobassistantapi.service.CVService;
 import org.springframework.web.multipart.MultipartFile;
+import za.ac.cput.jobassistantapi.service.PdfExtractionService;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,11 +22,13 @@ public class CVServiceImpl implements CVService {
 
     private final UserRepository userRepository;
     private final CVRepository cvRepository;
+    private final PdfExtractionService pdfExtractionService;
 
     public CVServiceImpl(CVRepository cvRepository,
-                         UserRepository userRepository) {
+                         UserRepository userRepository, PdfExtractionService pdfExtractionService) {
         this.cvRepository = cvRepository;
         this.userRepository = userRepository;
+        this.pdfExtractionService = pdfExtractionService;
     }
 
     @Override
