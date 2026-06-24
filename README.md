@@ -1,4 +1,4 @@
-# Job Assistant API
+# Job Application Assistant 
 
 AI-powered job search tool. Upload your CV, get job matches ranked by fit, see skill gaps.
 
