@@ -15,8 +15,9 @@ AI-powered job search tool. Upload your CV, get job matches ranked by fit, see s
 5. **See skill gaps** → For any job, AI shows: match %, missing skills, what to learn
 6. **Track applications** → Dashboard to save and track jobs (status: saved, applied, interview, rejected, accepted)
 7. **Ask AI** → Chat about your job search. "Which job am I most qualified for?" etc.
+
+<img width="1504" height="825" alt="image" src="https://github.com/user-attachments/assets/4a7cdfc5-8d64-47cd-be35-aa8e4e60c965" />   
 <img width="564" height="1164" alt="image" src="https://github.com/user-attachments/assets/c117e857-a7e9-48f3-9b3b-cbef488f8038" />
-<img width="1504" height="825" alt="image" src="https://github.com/user-attachments/assets/4a7cdfc5-8d64-47cd-be35-aa8e4e60c965" />
 
 ---
 
