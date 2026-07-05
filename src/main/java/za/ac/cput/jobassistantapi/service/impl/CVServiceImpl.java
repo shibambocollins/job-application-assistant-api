@@ -2,9 +2,7 @@ package za.ac.cput.jobassistantapi.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
-import za.ac.cput.jobassistantapi.dto.request.CVUploadRequest;
 import za.ac.cput.jobassistantapi.dto.response.CVResponse;
-import za.ac.cput.jobassistantapi.dto.response.CVUploadResponse;
 import za.ac.cput.jobassistantapi.dto.response.SkillExtractionResult;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.User;
@@ -19,7 +17,6 @@ import za.ac.cput.jobassistantapi.service.TextCleaningService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -67,12 +64,20 @@ public class CVServiceImpl implements CVService {
             SkillExtractionResult skillResult =
                     skillExtractionService.extract(extractedText);
 
+            ObjectMapper mapper = new ObjectMapper();
+            String skillsJson;
+            try {
+                skillsJson = mapper.writeValueAsString(skillResult.getSkills());
+            } catch (Exception e) {
+                skillsJson = "[]";
+            }
+
             CV cv = new CV.Builder()
                     .setUserId(user.getId())
                     .setBlobUrl(filePath.toString())
                     .setOriginalFilename(file.getOriginalFilename())
                     .setExtractedText(extractedText)
-                    //.setSkillsJson(skillsJson)
+                    .setSkillsJson(skillsJson)
                     .build();
 
             CV saved = cvRepository.save(cv);
