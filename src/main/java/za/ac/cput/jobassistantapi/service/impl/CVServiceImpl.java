@@ -2,13 +2,15 @@ package za.ac.cput.jobassistantapi.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
 import za.ac.cput.jobassistantapi.dto.response.CVResponse;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.CVRepository;
 import za.ac.cput.jobassistantapi.repository.UserRepository;
+import za.ac.cput.jobassistantapi.service.AIService;
 import za.ac.cput.jobassistantapi.service.CVService;
-import org.springframework.web.multipart.MultipartFile;
 import za.ac.cput.jobassistantapi.service.PdfExtractionService;
 import za.ac.cput.jobassistantapi.service.TextCleaningService;
 
@@ -23,16 +25,19 @@ public class CVServiceImpl implements CVService {
     private final UserRepository userRepository;
     private final CVRepository cvRepository;
     private final PdfExtractionService pdfExtractionService;
-    private final SkillExtractionService skillExtractionService;
     private final TextCleaningService textCleaningService;
+    private final AIService aiService;
 
     public CVServiceImpl(CVRepository cvRepository,
-                         UserRepository userRepository, PdfExtractionService pdfExtractionService, SkillExtractionService skillExtractionService, TextCleaningService textCleaningService) {
+                         UserRepository userRepository,
+                         PdfExtractionService pdfExtractionService,
+                         TextCleaningService textCleaningService,
+                         AIService aiService) {
         this.cvRepository = cvRepository;
         this.userRepository = userRepository;
         this.pdfExtractionService = pdfExtractionService;
-        this.skillExtractionService = skillExtractionService;
         this.textCleaningService = textCleaningService;
+        this.aiService = aiService;
     }
 
     @Override
@@ -46,7 +51,6 @@ public class CVServiceImpl implements CVService {
         }
 
         try {
-
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
             Path uploadPath = Paths.get("uploads");
@@ -56,18 +60,16 @@ public class CVServiceImpl implements CVService {
             Files.copy(file.getInputStream(), filePath);
 
             String rawText = pdfExtractionService.extractText(file);
-
             String extractedText = textCleaningService.clean(rawText);
 
-            SkillExtractionResult skillResult =
-                    skillExtractionService.extract(extractedText);
+            CVDataResult cvData = aiService.extractCVData(extractedText);
 
             ObjectMapper mapper = new ObjectMapper();
             String skillsJson;
             try {
-                skillsJson = mapper.writeValueAsString(skillResult.getSkills());
+                skillsJson = mapper.writeValueAsString(cvData);
             } catch (Exception e) {
-                skillsJson = "[]";
+                skillsJson = "{}";
             }
 
             CV cv = new CV.Builder()
