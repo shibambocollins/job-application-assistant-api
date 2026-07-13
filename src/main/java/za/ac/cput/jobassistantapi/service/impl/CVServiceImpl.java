@@ -3,7 +3,6 @@ package za.ac.cput.jobassistantapi.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.response.CVResponse;
-import za.ac.cput.jobassistantapi.dto.response.SkillExtractionResult;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.CVRepository;
@@ -11,7 +10,6 @@ import za.ac.cput.jobassistantapi.repository.UserRepository;
 import za.ac.cput.jobassistantapi.service.CVService;
 import org.springframework.web.multipart.MultipartFile;
 import za.ac.cput.jobassistantapi.service.PdfExtractionService;
-import za.ac.cput.jobassistantapi.service.SkillExtractionService;
 import za.ac.cput.jobassistantapi.service.TextCleaningService;
 
 import java.nio.file.Files;
