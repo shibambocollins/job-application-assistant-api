@@ -3,6 +3,7 @@ package za.ac.cput.jobassistantapi.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
@@ -48,9 +49,15 @@ public class AIServiceImpl implements AIService {
                 )
         );
 
+        // Build the full path manually to avoid the {model}: colon parsing bug
+        String path = "/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+
+        System.out.println("DEBUG FULL URL: https://generativelanguage.googleapis.com" + path);
+
         try {
             String response = webClient.post()
-                    .uri("/v1beta/models/{model}:generateContent?key={key}", model, apiKey)
+                    .uri(path)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -74,7 +81,6 @@ public class AIServiceImpl implements AIService {
                 .path("text")
                 .asText();
 
-        // Gemini sometimes wraps JSON in ```json fences — strip them
         String cleanJson = text.replaceAll("```json", "").replaceAll("```", "").trim();
 
         return mapper.readValue(cleanJson, CVDataResult.class);
