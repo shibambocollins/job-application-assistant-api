@@ -56,7 +56,8 @@ public class AIServiceImpl implements AIService {
 
         try {
             String response = webClient.post()
-                    .uri(path)
+                    .uri("/v1beta/models/" + model + ":generateContent")
+                    .header("x-goog-api-key", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
