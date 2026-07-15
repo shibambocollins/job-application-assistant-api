@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import za.ac.cput.jobassistantapi.dto.request.JobCreateRequest;
 import za.ac.cput.jobassistantapi.dto.request.StatusUpdateRequest;
 import za.ac.cput.jobassistantapi.dto.response.JobApplicationResponse;
+import za.ac.cput.jobassistantapi.service.DiscoveryService;
 import za.ac.cput.jobassistantapi.service.JobService;
 
 import java.util.List;
@@ -15,9 +16,11 @@ import java.util.List;
 public class JobController {
 
     private final JobService jobService;
+    private final DiscoveryService discoveryService;
 
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService, DiscoveryService discoveryService) {
         this.jobService = jobService;
+        this.discoveryService = discoveryService;
     }
 
     @PostMapping
@@ -57,5 +60,12 @@ public class JobController {
     ) {
         jobService.deleteApplication(id, authentication.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/discover")
+    public ResponseEntity<List<JobApplicationResponse>> discoverJobs(Authentication authentication) {
+        return ResponseEntity.ok(
+                discoveryService.discoverJobs(authentication.getName())
+        );
     }
 }
