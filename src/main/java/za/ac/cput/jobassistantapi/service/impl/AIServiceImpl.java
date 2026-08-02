@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
+import za.ac.cput.jobassistantapi.dto.response.JobFitResult;
 import za.ac.cput.jobassistantapi.service.AIService;
 
 import java.util.List;
@@ -50,25 +51,58 @@ public class AIServiceImpl implements AIService {
         );
 
         try {
-            String response = webClient.post()
-                    .uri("/v1beta/models/" + model + ":generateContent")
-                    .header("x-goog-api-key", apiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            return parseGeminiResponse(response);
-
+            return callGemini(requestBody, CVDataResult.class);
         } catch (Exception e) {
             throw new RuntimeException("AI extraction failed: " + e.getMessage());
         }
     }
 
-    private CVDataResult parseGeminiResponse(String rawResponse) throws Exception {
+    @Override
+    public JobFitResult analyzeJobFit(String cvText, String jobDescription) {
+
+        String prompt = """
+            Compare this CV against this job description and assess fit.
+            Return ONLY valid JSON, no markdown, no explanation, in this exact shape:
+            {
+              "matchScore": 0,
+              "missingSkills": ["skill the job needs that the CV lacks"],
+              "strengths": ["relevant CV strength for this job"],
+              "suggestions": ["concrete improvement suggestion"]
+            }
+            matchScore is an integer from 0 to 100 estimating how well the CV fits the job.
+
+            CV text:
+            %s
+
+            Job description:
+            %s
+            """.formatted(cvText, jobDescription);
+
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(Map.of("text", prompt)))
+                )
+        );
+
+        try {
+            return callGemini(requestBody, JobFitResult.class);
+        } catch (Exception e) {
+            throw new RuntimeException("AI job-fit analysis failed: " + e.getMessage());
+        }
+    }
+
+    private <T> T callGemini(Map<String, Object> requestBody, Class<T> responseType) throws Exception {
+        String response = webClient.post()
+                .uri("/v1beta/models/" + model + ":generateContent")
+                .header("x-goog-api-key", apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(rawResponse);
+        JsonNode root = mapper.readTree(response);
 
         String text = root
                 .path("candidates").get(0)
@@ -79,6 +113,6 @@ public class AIServiceImpl implements AIService {
 
         String cleanJson = text.replaceAll("```json", "").replaceAll("```", "").trim();
 
-        return mapper.readValue(cleanJson, CVDataResult.class);
+        return mapper.readValue(cleanJson, responseType);
     }
 }
