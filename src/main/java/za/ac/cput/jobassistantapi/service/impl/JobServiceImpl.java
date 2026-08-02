@@ -3,6 +3,8 @@ package za.ac.cput.jobassistantapi.service.impl;
 import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.request.JobCreateRequest;
 import za.ac.cput.jobassistantapi.dto.response.JobApplicationResponse;
+import za.ac.cput.jobassistantapi.exception.ForbiddenException;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.Job;
 import za.ac.cput.jobassistantapi.model.JobApplication;
 import za.ac.cput.jobassistantapi.model.User;
@@ -35,7 +37,7 @@ public class JobServiceImpl implements JobService {
     public JobApplicationResponse addManualJob(JobCreateRequest request, String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Job job = new Job.Builder()
                 .setTitle(request.getTitle())
@@ -63,7 +65,7 @@ public class JobServiceImpl implements JobService {
     public List<JobApplicationResponse> getMyApplications(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return jobApplicationRepository.findByUserId(user.getId())
                 .stream()
@@ -75,10 +77,10 @@ public class JobServiceImpl implements JobService {
     public JobApplicationResponse updateStatus(Long applicationId, ApplicationStatus status, String email) {
 
         JobApplication application = jobApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         if (!application.getUser().getEmail().equals(email)) {
-            throw new RuntimeException("Not your application");
+            throw new ForbiddenException("Not your application");
         }
 
         JobApplication updated = new JobApplication.Builder()
@@ -95,10 +97,10 @@ public class JobServiceImpl implements JobService {
     public void deleteApplication(Long applicationId, String email) {
 
         JobApplication application = jobApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         if (!application.getUser().getEmail().equals(email)) {
-            throw new RuntimeException("Not your application");
+            throw new ForbiddenException("Not your application");
         }
 
         jobApplicationRepository.delete(application);

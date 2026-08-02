@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.request.ChatRequest;
 import za.ac.cput.jobassistantapi.dto.response.ChatResponse;
 import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.ChatMessage;
 import za.ac.cput.jobassistantapi.model.JobApplication;
 import za.ac.cput.jobassistantapi.model.User;
@@ -50,7 +51,7 @@ public class ChatServiceImpl implements ChatService {
     public ChatResponse sendMessage(ChatRequest request, String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String contextSnapshot = buildContextSnapshot(user);
         String conversationHistory = buildConversationHistory(user.getId());
@@ -73,7 +74,7 @@ public class ChatServiceImpl implements ChatService {
     public List<ChatResponse> getHistory(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return chatMessageRepository.findByUser_IdOrderBySentAtAsc(user.getId())
                 .stream()

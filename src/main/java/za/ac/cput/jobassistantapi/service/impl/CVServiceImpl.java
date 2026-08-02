@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
 import za.ac.cput.jobassistantapi.dto.response.CVResponse;
+import za.ac.cput.jobassistantapi.exception.DuplicateResourceException;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.CVRepository;
@@ -44,10 +46,10 @@ public class CVServiceImpl implements CVService {
     public CVResponse uploadCV(MultipartFile file, String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (cvRepository.findByUserId(user.getId()).isPresent()) {
-            throw new RuntimeException("User already has a CV");
+            throw new DuplicateResourceException("User already has a CV");
         }
 
         try {
@@ -93,9 +95,9 @@ public class CVServiceImpl implements CVService {
     public CV getCVByUserEmail(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return cvRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("CV not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("CV not found"));
     }
 }

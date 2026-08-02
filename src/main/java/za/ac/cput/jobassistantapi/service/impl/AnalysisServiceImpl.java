@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.response.AnalysisResponse;
 import za.ac.cput.jobassistantapi.dto.response.JobFitResult;
+import za.ac.cput.jobassistantapi.exception.ForbiddenException;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.Analysis;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.JobApplication;
@@ -41,7 +43,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         JobApplication application = getOwnedApplication(jobApplicationId, email);
 
         CV cv = cvRepository.findByUserId(application.getUser().getId())
-                .orElseThrow(() -> new RuntimeException("Upload a CV first"));
+                .orElseThrow(() -> new ResourceNotFoundException("Upload a CV first"));
 
         JobFitResult result = aiService.analyzeJobFit(
                 cv.getExtractedText(),
@@ -69,17 +71,17 @@ public class AnalysisServiceImpl implements AnalysisService {
 
         Analysis analysis = analysisRepository
                 .findTopByJobApplication_IdOrderByCreatedAtDesc(jobApplicationId)
-                .orElseThrow(() -> new RuntimeException("No analysis found for this application"));
+                .orElseThrow(() -> new ResourceNotFoundException("No analysis found for this application"));
 
         return toResponse(analysis);
     }
 
     private JobApplication getOwnedApplication(Long jobApplicationId, String email) {
         JobApplication application = jobApplicationRepository.findById(jobApplicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         if (!application.getUser().getEmail().equals(email)) {
-            throw new RuntimeException("Not your application");
+            throw new ForbiddenException("Not your application");
         }
 
         return application;

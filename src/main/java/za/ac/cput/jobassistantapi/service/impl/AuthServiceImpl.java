@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.request.LoginRequest;
 import za.ac.cput.jobassistantapi.dto.request.RegisterRequest;
 import za.ac.cput.jobassistantapi.dto.response.AuthResponse;
+import za.ac.cput.jobassistantapi.exception.DuplicateResourceException;
+import za.ac.cput.jobassistantapi.exception.InvalidCredentialsException;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.UserRepository;
 import za.ac.cput.jobassistantapi.security.JwtService;
@@ -29,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new DuplicateResourceException("Email already exists");
         }
 
         User user = new User.Builder()
@@ -49,10 +52,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid password");
+            throw new InvalidCredentialsException("Invalid password");
         }
 
         String token = jwtService.generateToken(user.getEmail());

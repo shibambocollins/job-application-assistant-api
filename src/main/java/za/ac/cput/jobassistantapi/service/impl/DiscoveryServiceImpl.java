@@ -3,6 +3,7 @@ package za.ac.cput.jobassistantapi.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.response.JobApplicationResponse;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.Job;
 import za.ac.cput.jobassistantapi.model.JobApplication;
@@ -44,10 +45,10 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     public List<JobApplicationResponse> discoverJobs(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         CV cv = cvRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Upload a CV first"));
+                .orElseThrow(() -> new ResourceNotFoundException("Upload a CV first"));
 
         // Hardcoded category — CV skills are dev-focused, so this always applies for your app
         List<JsonNode> museJobs = museApiClient.fetchJobs("Software Engineering", "Entry Level");
