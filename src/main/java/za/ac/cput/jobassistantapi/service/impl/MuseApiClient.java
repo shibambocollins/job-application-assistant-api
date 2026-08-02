@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class MuseApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(30))
                 .block();
 
         List<JsonNode> jobs = new ArrayList<>();
