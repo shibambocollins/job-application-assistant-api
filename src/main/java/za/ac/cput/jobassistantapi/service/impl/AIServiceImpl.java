@@ -10,6 +10,7 @@ import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
 import za.ac.cput.jobassistantapi.dto.response.JobFitResult;
 import za.ac.cput.jobassistantapi.service.AIService;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -91,7 +92,45 @@ public class AIServiceImpl implements AIService {
         }
     }
 
+    @Override
+    public String generateChatReply(String contextSnapshot, String conversationHistory, String userMessage) {
+
+        String prompt = """
+            You are a helpful AI career assistant inside a job-search app called AI Job Assistant.
+            Use the context below (the user's CV summary and tracked job applications) to answer
+            their question directly and concisely. If the context doesn't have enough information
+            to answer, say so honestly instead of guessing. Do not use markdown formatting.
+
+            User context:
+            %s
+
+            Conversation so far:
+            %s
+
+            User: %s
+            """.formatted(contextSnapshot, conversationHistory, userMessage);
+
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(Map.of("text", prompt)))
+                )
+        );
+
+        try {
+            return callGeminiText(requestBody);
+        } catch (Exception e) {
+            throw new RuntimeException("AI chat failed: " + e.getMessage());
+        }
+    }
+
     private <T> T callGemini(Map<String, Object> requestBody, Class<T> responseType) throws Exception {
+        String text = callGeminiText(requestBody);
+        String cleanJson = text.replaceAll("```json", "").replaceAll("```", "").trim();
+
+        return new ObjectMapper().readValue(cleanJson, responseType);
+    }
+
+    private String callGeminiText(Map<String, Object> requestBody) {
         String response = webClient.post()
                 .uri("/v1beta/models/" + model + ":generateContent")
                 .header("x-goog-api-key", apiKey)
@@ -99,20 +138,21 @@ public class AIServiceImpl implements AIService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(60))
                 .block();
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(response);
+        try {
+            JsonNode root = new ObjectMapper().readTree(response);
 
-        String text = root
-                .path("candidates").get(0)
-                .path("content")
-                .path("parts").get(0)
-                .path("text")
-                .asText();
-
-        String cleanJson = text.replaceAll("```json", "").replaceAll("```", "").trim();
-
-        return mapper.readValue(cleanJson, responseType);
+            return root
+                    .path("candidates").get(0)
+                    .path("content")
+                    .path("parts").get(0)
+                    .path("text")
+                    .asText()
+                    .trim();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse Gemini response: " + e.getMessage());
+        }
     }
 }

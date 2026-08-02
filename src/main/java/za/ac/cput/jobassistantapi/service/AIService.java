@@ -7,4 +7,6 @@ public interface AIService {
     CVDataResult extractCVData(String cvText);
 
     JobFitResult analyzeJobFit(String cvText, String jobDescription);
+
+    String generateChatReply(String contextSnapshot, String conversationHistory, String userMessage);
 }
