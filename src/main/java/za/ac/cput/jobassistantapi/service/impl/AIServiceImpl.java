@@ -49,11 +49,6 @@ public class AIServiceImpl implements AIService {
                 )
         );
 
-        // Build the full path manually to avoid the {model}: colon parsing bug
-        String path = "/v1beta/models/" + model + ":generateContent?key=" + apiKey;
-
-        System.out.println("DEBUG FULL URL: https://generativelanguage.googleapis.com" + path);
-
         try {
             String response = webClient.post()
                     .uri("/v1beta/models/" + model + ":generateContent")
