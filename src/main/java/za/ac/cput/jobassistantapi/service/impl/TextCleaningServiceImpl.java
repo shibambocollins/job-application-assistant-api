@@ -16,8 +16,8 @@ public class TextCleaningServiceImpl implements TextCleaningService {
 
                 .replaceAll("\\s+", " ")
 
-                .replaceAll("[^\\x20-\\x7E]", " ")
 
+                .replaceAll("[^\\x20-\\x7E]", " ")
                 .trim();
     }
 }

@@ -47,6 +47,9 @@ application-dev.yml
 *.log
 logs/
 
+### Uploaded files ###
+uploads/
+
 ### OS Generated Files ###
 .DS_Store
 .DS_Store?
