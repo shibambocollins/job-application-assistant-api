@@ -11,6 +11,7 @@ import za.ac.cput.jobassistantapi.dto.response.JobFitResult;
 import za.ac.cput.jobassistantapi.service.AIService;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +121,33 @@ public class AIServiceImpl implements AIService {
             return callGeminiText(requestBody);
         } catch (Exception e) {
             throw new RuntimeException("AI chat failed: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public String extractTextFromImage(byte[] imageBytes, String mimeType) {
+
+        String prompt = "Extract all readable text from this image, such as a CV/resume. " +
+                "Return ONLY the raw extracted text, no commentary, no markdown formatting.";
+
+        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(
+                                Map.of("text", prompt),
+                                Map.of("inline_data", Map.of(
+                                        "mime_type", mimeType,
+                                        "data", base64Image
+                                ))
+                        ))
+                )
+        );
+
+        try {
+            return callGeminiText(requestBody);
+        } catch (Exception e) {
+            throw new RuntimeException("AI image text extraction failed: " + e.getMessage());
         }
     }
 

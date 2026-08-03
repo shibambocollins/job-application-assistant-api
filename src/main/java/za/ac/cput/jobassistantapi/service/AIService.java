@@ -9,4 +9,6 @@ public interface AIService {
     JobFitResult analyzeJobFit(String cvText, String jobDescription);
 
     String generateChatReply(String contextSnapshot, String conversationHistory, String userMessage);
+
+    String extractTextFromImage(byte[] imageBytes, String mimeType);
 }

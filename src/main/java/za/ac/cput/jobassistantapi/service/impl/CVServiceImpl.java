@@ -16,6 +16,7 @@ import za.ac.cput.jobassistantapi.service.AIService;
 import za.ac.cput.jobassistantapi.service.CVService;
 import za.ac.cput.jobassistantapi.service.PdfExtractionService;
 import za.ac.cput.jobassistantapi.service.TextCleaningService;
+import za.ac.cput.jobassistantapi.service.WordExtractionService;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,17 +29,20 @@ public class CVServiceImpl implements CVService {
     private final UserRepository userRepository;
     private final CVRepository cvRepository;
     private final PdfExtractionService pdfExtractionService;
+    private final WordExtractionService wordExtractionService;
     private final TextCleaningService textCleaningService;
     private final AIService aiService;
 
     public CVServiceImpl(CVRepository cvRepository,
                          UserRepository userRepository,
                          PdfExtractionService pdfExtractionService,
+                         WordExtractionService wordExtractionService,
                          TextCleaningService textCleaningService,
                          AIService aiService) {
         this.cvRepository = cvRepository;
         this.userRepository = userRepository;
         this.pdfExtractionService = pdfExtractionService;
+        this.wordExtractionService = wordExtractionService;
         this.textCleaningService = textCleaningService;
         this.aiService = aiService;
     }
@@ -57,11 +61,20 @@ public class CVServiceImpl implements CVService {
             throw new InvalidRequestException("Uploaded file is empty");
         }
 
-        boolean isPdf = "application/pdf".equals(file.getContentType())
-                || (file.getOriginalFilename() != null && file.getOriginalFilename().toLowerCase().endsWith(".pdf"));
+        String extension = getExtension(file.getOriginalFilename());
+        String contentType = file.getContentType();
 
-        if (!isPdf) {
-            throw new InvalidRequestException("Only PDF files are supported");
+        boolean isPdf = "pdf".equals(extension) || "application/pdf".equals(contentType);
+
+        boolean isWord = "docx".equals(extension) || "doc".equals(extension)
+                || "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(contentType)
+                || "application/msword".equals(contentType);
+
+        boolean isImage = "jpg".equals(extension) || "jpeg".equals(extension) || "png".equals(extension)
+                || (contentType != null && contentType.startsWith("image/"));
+
+        if (!isPdf && !isWord && !isImage) {
+            throw new InvalidRequestException("Unsupported file type. Supported: PDF, DOC, DOCX, JPG, PNG");
         }
 
         try {
@@ -73,7 +86,15 @@ public class CVServiceImpl implements CVService {
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath);
 
-            String rawText = pdfExtractionService.extractText(file);
+            String rawText;
+            if (isPdf) {
+                rawText = pdfExtractionService.extractText(file);
+            } else if (isWord) {
+                rawText = wordExtractionService.extractText(file);
+            } else {
+                rawText = aiService.extractTextFromImage(file.getBytes(), contentType);
+            }
+
             String extractedText = textCleaningService.clean(rawText);
 
             CVDataResult cvData = aiService.extractCVData(extractedText);
@@ -111,5 +132,13 @@ public class CVServiceImpl implements CVService {
 
         return cvRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("CV not found"));
+    }
+
+    private String getExtension(String filename) {
+        if (filename == null) {
+            return "";
+        }
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 ? filename.substring(dot + 1).toLowerCase() : "";
     }
 }
