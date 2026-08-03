@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import za.ac.cput.jobassistantapi.dto.response.CVDataResult;
 import za.ac.cput.jobassistantapi.dto.response.CVResponse;
 import za.ac.cput.jobassistantapi.exception.DuplicateResourceException;
+import za.ac.cput.jobassistantapi.exception.InvalidRequestException;
 import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.CV;
 import za.ac.cput.jobassistantapi.model.User;
@@ -50,6 +51,17 @@ public class CVServiceImpl implements CVService {
 
         if (cvRepository.findByUserId(user.getId()).isPresent()) {
             throw new DuplicateResourceException("User already has a CV");
+        }
+
+        if (file.isEmpty()) {
+            throw new InvalidRequestException("Uploaded file is empty");
+        }
+
+        boolean isPdf = "application/pdf".equals(file.getContentType())
+                || (file.getOriginalFilename() != null && file.getOriginalFilename().toLowerCase().endsWith(".pdf"));
+
+        if (!isPdf) {
+            throw new InvalidRequestException("Only PDF files are supported");
         }
 
         try {

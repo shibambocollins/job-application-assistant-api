@@ -1,8 +1,13 @@
 package za.ac.cput.jobassistantapi.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginRequest {
 
+    @NotBlank(message = "email is required")
     private String email;
+
+    @NotBlank(message = "password is required")
     private String password;
 
     public LoginRequest() {}

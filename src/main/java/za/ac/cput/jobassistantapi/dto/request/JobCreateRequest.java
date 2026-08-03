@@ -1,10 +1,18 @@
 package za.ac.cput.jobassistantapi.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class JobCreateRequest {
 
+    @NotBlank(message = "title is required")
     private String title;
+
+    @NotBlank(message = "company is required")
     private String company;
+
+    @NotBlank(message = "description is required")
     private String description;
+
     private String location;
 
     public JobCreateRequest() {}

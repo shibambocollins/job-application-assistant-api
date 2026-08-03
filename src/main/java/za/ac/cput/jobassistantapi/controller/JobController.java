@@ -1,5 +1,6 @@
 package za.ac.cput.jobassistantapi.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class JobController {
 
     @PostMapping
     public ResponseEntity<JobApplicationResponse> addJob(
-            @RequestBody JobCreateRequest request,
+            @Valid @RequestBody JobCreateRequest request,
             Authentication authentication
     ) {
         return ResponseEntity.ok(
@@ -45,7 +46,7 @@ public class JobController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<JobApplicationResponse> updateStatus(
             @PathVariable Long id,
-            @RequestBody StatusUpdateRequest request,
+            @Valid @RequestBody StatusUpdateRequest request,
             Authentication authentication
     ) {
         return ResponseEntity.ok(

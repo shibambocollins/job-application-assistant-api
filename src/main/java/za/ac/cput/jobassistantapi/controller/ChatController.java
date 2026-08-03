@@ -1,5 +1,6 @@
 package za.ac.cput.jobassistantapi.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatResponse> sendMessage(
-            @RequestBody ChatRequest request,
+            @Valid @RequestBody ChatRequest request,
             Authentication authentication
     ) {
         return ResponseEntity.ok(
