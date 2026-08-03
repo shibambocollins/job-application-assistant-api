@@ -13,14 +13,12 @@ import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.CVRepository;
 import za.ac.cput.jobassistantapi.repository.UserRepository;
 import za.ac.cput.jobassistantapi.service.AIService;
+import za.ac.cput.jobassistantapi.service.BlobStorageService;
 import za.ac.cput.jobassistantapi.service.CVService;
 import za.ac.cput.jobassistantapi.service.PdfExtractionService;
 import za.ac.cput.jobassistantapi.service.TextCleaningService;
 import za.ac.cput.jobassistantapi.service.WordExtractionService;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
@@ -32,19 +30,22 @@ public class CVServiceImpl implements CVService {
     private final WordExtractionService wordExtractionService;
     private final TextCleaningService textCleaningService;
     private final AIService aiService;
+    private final BlobStorageService blobStorageService;
 
     public CVServiceImpl(CVRepository cvRepository,
                          UserRepository userRepository,
                          PdfExtractionService pdfExtractionService,
                          WordExtractionService wordExtractionService,
                          TextCleaningService textCleaningService,
-                         AIService aiService) {
+                         AIService aiService,
+                         BlobStorageService blobStorageService) {
         this.cvRepository = cvRepository;
         this.userRepository = userRepository;
         this.pdfExtractionService = pdfExtractionService;
         this.wordExtractionService = wordExtractionService;
         this.textCleaningService = textCleaningService;
         this.aiService = aiService;
+        this.blobStorageService = blobStorageService;
     }
 
     @Override
@@ -80,11 +81,7 @@ public class CVServiceImpl implements CVService {
         try {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
-            Path uploadPath = Paths.get("uploads");
-            Files.createDirectories(uploadPath);
-
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath);
+            String blobUrl = blobStorageService.upload(file, fileName);
 
             String rawText;
             if (isPdf) {
@@ -109,7 +106,7 @@ public class CVServiceImpl implements CVService {
 
             CV cv = new CV.Builder()
                     .setUserId(user.getId())
-                    .setBlobUrl(filePath.toString())
+                    .setBlobUrl(blobUrl)
                     .setOriginalFilename(file.getOriginalFilename())
                     .setExtractedText(extractedText)
                     .setSkillsJson(skillsJson)
