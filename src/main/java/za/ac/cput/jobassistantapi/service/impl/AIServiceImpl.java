@@ -2,6 +2,8 @@ package za.ac.cput.jobassistantapi.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.Map;
 
 @Service
 public class AIServiceImpl implements AIService {
+
+    private static final Logger log = LoggerFactory.getLogger(AIServiceImpl.class);
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -159,15 +163,23 @@ public class AIServiceImpl implements AIService {
     }
 
     private String callGeminiText(Map<String, Object> requestBody) {
-        String response = webClient.post()
-                .uri("/v1beta/models/" + model + ":generateContent")
-                .header("x-goog-api-key", apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(60))
-                .block();
+        log.info("Calling Gemini model {}", model);
+
+        String response;
+        try {
+            response = webClient.post()
+                    .uri("/v1beta/models/" + model + ":generateContent")
+                    .header("x-goog-api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(60))
+                    .block();
+        } catch (RuntimeException e) {
+            log.error("Gemini call failed", e);
+            throw e;
+        }
 
         try {
             JsonNode root = new ObjectMapper().readTree(response);
@@ -180,6 +192,7 @@ public class AIServiceImpl implements AIService {
                     .asText()
                     .trim();
         } catch (Exception e) {
+            log.error("Failed to parse Gemini response: {}", response, e);
             throw new RuntimeException("Failed to parse Gemini response: " + e.getMessage());
         }
     }

@@ -14,5 +14,7 @@ public interface JobService {
 
     JobApplicationResponse updateStatus(Long applicationId, ApplicationStatus status, String email);
 
+    JobApplicationResponse updateJobDetails(Long applicationId, JobCreateRequest request, String email);
+
     void deleteApplication(Long applicationId, String email);
 }

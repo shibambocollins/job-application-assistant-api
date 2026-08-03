@@ -131,6 +131,52 @@ class JobServiceImplTest {
     }
 
     @Test
+    void updateJobDetails_success() {
+        JobApplication app = application();
+        JobCreateRequest request = new JobCreateRequest();
+        request.setTitle("Senior Dev");
+        request.setCompany("Updated Co");
+        request.setDescription("Updated description");
+        request.setLocation("Cape Town");
+
+        when(jobApplicationRepository.findById(100L)).thenReturn(Optional.of(app));
+        when(jobRepository.save(any(Job.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        JobApplicationResponse response = jobService.updateJobDetails(100L, request, OWNER_EMAIL);
+
+        assertEquals("Senior Dev", response.getJobTitle());
+        assertEquals("Updated Co", response.getCompany());
+        assertEquals("Cape Town", response.getLocation());
+    }
+
+    @Test
+    void updateJobDetails_notOwner_throwsForbiddenException() {
+        JobCreateRequest request = new JobCreateRequest();
+        request.setTitle("Senior Dev");
+        request.setCompany("Updated Co");
+        request.setDescription("Updated description");
+
+        when(jobApplicationRepository.findById(100L)).thenReturn(Optional.of(application()));
+
+        assertThrows(ForbiddenException.class,
+                () -> jobService.updateJobDetails(100L, request, OTHER_EMAIL));
+        verify(jobRepository, never()).save(any());
+    }
+
+    @Test
+    void updateJobDetails_applicationNotFound_throwsResourceNotFoundException() {
+        JobCreateRequest request = new JobCreateRequest();
+        request.setTitle("Senior Dev");
+        request.setCompany("Updated Co");
+        request.setDescription("Updated description");
+
+        when(jobApplicationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> jobService.updateJobDetails(999L, request, OWNER_EMAIL));
+    }
+
+    @Test
     void deleteApplication_success() {
         JobApplication app = application();
         when(jobApplicationRepository.findById(100L)).thenReturn(Optional.of(app));

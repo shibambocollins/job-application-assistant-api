@@ -6,4 +6,6 @@ public interface BlobStorageService {
 
     String upload(MultipartFile file, String blobName);
 
+    void deleteByUrl(String blobUrl);
+
 }

@@ -27,6 +27,16 @@ public class CVController {
         );
     }
 
+    @PutMapping("/upload")
+    public ResponseEntity<CVResponse> replaceCV(
+            @RequestPart("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                cvService.replaceCV(file, authentication.getName())
+        );
+    }
+
     @GetMapping("/my-cv")
     public ResponseEntity<CV> getMyCV(Authentication authentication) {
         return ResponseEntity.ok(

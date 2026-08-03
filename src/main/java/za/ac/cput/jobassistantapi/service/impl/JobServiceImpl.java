@@ -94,6 +94,37 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public JobApplicationResponse updateJobDetails(Long applicationId, JobCreateRequest request, String email) {
+
+        JobApplication application = jobApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        if (!application.getUser().getEmail().equals(email)) {
+            throw new ForbiddenException("Not your application");
+        }
+
+        Job updatedJob = new Job.Builder()
+                .copy(application.getJob())
+                .setTitle(request.getTitle())
+                .setCompany(request.getCompany())
+                .setDescription(request.getDescription())
+                .setLocation(request.getLocation())
+                .build();
+
+        Job savedJob = jobRepository.save(updatedJob);
+
+        return new JobApplicationResponse(
+                application.getId(),
+                savedJob.getTitle(),
+                savedJob.getCompany(),
+                savedJob.getLocation(),
+                application.getStatus(),
+                application.getAppliedDate(),
+                application.getCreatedAt()
+        );
+    }
+
+    @Override
     public void deleteApplication(Long applicationId, String email) {
 
         JobApplication application = jobApplicationRepository.findById(applicationId)

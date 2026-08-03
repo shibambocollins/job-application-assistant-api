@@ -179,6 +179,50 @@ class CVServiceImplTest {
     }
 
     @Test
+    void replaceCV_success_deletesOldBlobAndSavesNewData() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new-cv.pdf", "application/pdf", "new pdf bytes".getBytes());
+
+        CV existing = new CV.Builder().setId(1L).setUserId(1L).setBlobUrl("https://blob.url/old-cv.pdf").build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user()));
+        when(cvRepository.findByUserId(1L)).thenReturn(Optional.of(existing));
+        when(blobStorageService.upload(any(), anyString())).thenReturn("https://blob.url/new-cv.pdf");
+        when(pdfExtractionService.extractText(file)).thenReturn("new raw text");
+        when(textCleaningService.clean("new raw text")).thenReturn("new cleaned text");
+        when(aiService.extractCVData("new cleaned text")).thenReturn(sampleCvData());
+        when(cvRepository.save(any(CV.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CVResponse response = cvService.replaceCV(file, EMAIL);
+
+        assertEquals(1L, response.getId());
+        assertEquals("CV replaced successfully", response.getMessage());
+        verify(blobStorageService).deleteByUrl("https://blob.url/old-cv.pdf");
+    }
+
+    @Test
+    void replaceCV_noExistingCv_throwsResourceNotFoundException() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "cv.pdf", "application/pdf", "bytes".getBytes());
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user()));
+        when(cvRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> cvService.replaceCV(file, EMAIL));
+        verify(blobStorageService, never()).upload(any(), anyString());
+    }
+
+    @Test
+    void replaceCV_userNotFound_throwsResourceNotFoundException() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "cv.pdf", "application/pdf", "bytes".getBytes());
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> cvService.replaceCV(file, EMAIL));
+    }
+
+    @Test
     void getCVByUserEmail_success() {
         CV cv = new CV.Builder().setId(1L).setUserId(1L).build();
 

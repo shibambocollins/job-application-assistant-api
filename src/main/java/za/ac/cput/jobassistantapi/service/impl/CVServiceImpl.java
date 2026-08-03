@@ -55,8 +55,61 @@ public class CVServiceImpl implements CVService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (cvRepository.findByUserId(user.getId()).isPresent()) {
-            throw new DuplicateResourceException("User already has a CV");
+            throw new DuplicateResourceException("User already has a CV. Use the replace endpoint to re-upload.");
         }
+
+        ProcessedFile processed = processFile(file);
+
+        CV cv = new CV.Builder()
+                .setUserId(user.getId())
+                .setBlobUrl(processed.blobUrl)
+                .setOriginalFilename(file.getOriginalFilename())
+                .setExtractedText(processed.extractedText)
+                .setSkillsJson(processed.skillsJson)
+                .build();
+
+        CV saved = cvRepository.save(cv);
+
+        return new CVResponse(saved.getId(), "CV uploaded successfully");
+    }
+
+    @Override
+    public CVResponse replaceCV(MultipartFile file, String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        CV existing = cvRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("No existing CV to replace — upload one first"));
+
+        ProcessedFile processed = processFile(file);
+
+        blobStorageService.deleteByUrl(existing.getBlobUrl());
+
+        CV updated = new CV.Builder()
+                .copy(existing)
+                .setBlobUrl(processed.blobUrl)
+                .setOriginalFilename(file.getOriginalFilename())
+                .setExtractedText(processed.extractedText)
+                .setSkillsJson(processed.skillsJson)
+                .build();
+
+        CV saved = cvRepository.save(updated);
+
+        return new CVResponse(saved.getId(), "CV replaced successfully");
+    }
+
+    @Override
+    public CV getCVByUserEmail(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return cvRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("CV not found"));
+    }
+
+    private ProcessedFile processFile(MultipartFile file) {
 
         if (file.isEmpty()) {
             throw new InvalidRequestException("Uploaded file is empty");
@@ -104,31 +157,11 @@ public class CVServiceImpl implements CVService {
                 skillsJson = "{}";
             }
 
-            CV cv = new CV.Builder()
-                    .setUserId(user.getId())
-                    .setBlobUrl(blobUrl)
-                    .setOriginalFilename(file.getOriginalFilename())
-                    .setExtractedText(extractedText)
-                    .setSkillsJson(skillsJson)
-                    .build();
-
-            CV saved = cvRepository.save(cv);
-
-            return new CVResponse(saved.getId(), "CV uploaded successfully");
+            return new ProcessedFile(blobUrl, extractedText, skillsJson);
 
         } catch (Exception e) {
             throw new RuntimeException("CV upload failed: " + e.getMessage());
         }
-    }
-
-    @Override
-    public CV getCVByUserEmail(String email) {
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        return cvRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("CV not found"));
     }
 
     private String getExtension(String filename) {
@@ -137,5 +170,8 @@ public class CVServiceImpl implements CVService {
         }
         int dot = filename.lastIndexOf('.');
         return dot >= 0 ? filename.substring(dot + 1).toLowerCase() : "";
+    }
+
+    private record ProcessedFile(String blobUrl, String extractedText, String skillsJson) {
     }
 }

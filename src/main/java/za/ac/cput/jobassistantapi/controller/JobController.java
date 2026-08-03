@@ -43,6 +43,17 @@ public class JobController {
         );
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<JobApplicationResponse> updateJobDetails(
+            @PathVariable Long id,
+            @Valid @RequestBody JobCreateRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                jobService.updateJobDetails(id, request, authentication.getName())
+        );
+    }
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<JobApplicationResponse> updateStatus(
             @PathVariable Long id,
