@@ -16,7 +16,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Run tests
-        run: ./mvnw test -B
+        run: |
+          chmod +x mvnw
+          ./mvnw test -B
 
   deploy:
     needs: test
@@ -29,7 +31,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build jar
-        run: ./mvnw clean package -DskipTests -B
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
