@@ -50,6 +50,9 @@ logs/
 ### Uploaded files ###
 uploads/
 
+### Local project notes (not for GitHub) ###
+AI_Job_Assistant_Project_Context.md
+
 ### OS Generated Files ###
 .DS_Store
 .DS_Store?
