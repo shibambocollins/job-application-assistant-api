@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import za.ac.cput.jobassistantapi.dto.request.ChangePasswordRequest;
 import za.ac.cput.jobassistantapi.dto.request.ForgotPasswordRequest;
 import za.ac.cput.jobassistantapi.dto.request.GoogleLoginRequest;
 import za.ac.cput.jobassistantapi.dto.request.LoginRequest;
@@ -13,6 +14,7 @@ import za.ac.cput.jobassistantapi.dto.response.AuthResponse;
 import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
 import za.ac.cput.jobassistantapi.model.User;
 import za.ac.cput.jobassistantapi.repository.UserRepository;
+import za.ac.cput.jobassistantapi.service.AccountService;
 import za.ac.cput.jobassistantapi.service.AuthService;
 import za.ac.cput.jobassistantapi.service.GoogleAuthService;
 import za.ac.cput.jobassistantapi.service.PasswordResetService;
@@ -25,15 +27,18 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
     private final GoogleAuthService googleAuthService;
+    private final AccountService accountService;
     private final UserRepository userRepository;
 
     public AuthController(AuthService authService,
                            PasswordResetService passwordResetService,
                            GoogleAuthService googleAuthService,
+                           AccountService accountService,
                            UserRepository userRepository) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.googleAuthService = googleAuthService;
+        this.accountService = accountService;
         this.userRepository = userRepository;
     }
 
@@ -74,5 +79,18 @@ public class AuthController {
                 "fullName", user.getFullName() == null ? "" : user.getFullName(),
                 "createdAt", user.getCreatedAt()
         ));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(Authentication authentication,
+                                                                @Valid @RequestBody ChangePasswordRequest request) {
+        accountService.changePassword(authentication.getName(), request);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteAccount(Authentication authentication) {
+        accountService.deleteAccount(authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 }
