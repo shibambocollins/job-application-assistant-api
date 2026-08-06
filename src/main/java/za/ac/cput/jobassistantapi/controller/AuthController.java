@@ -2,8 +2,6 @@ package za.ac.cput.jobassistantapi.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +27,6 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private static final int MAX_REGISTRATIONS_PER_HOUR = 5;
     private static final int MAX_PASSWORD_RESET_REQUESTS_PER_HOUR = 5;
 
@@ -57,8 +54,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
                                                   HttpServletRequest httpRequest) {
-        log.info("DEBUG_IP register: X-Forwarded-For=[{}] remoteAddr=[{}] resolvedKey=[{}]",
-                httpRequest.getHeader("X-Forwarded-For"), httpRequest.getRemoteAddr(), clientIp(httpRequest));
         String key = "register:" + clientIp(httpRequest);
         rateLimiterService.checkAllowed(key, MAX_REGISTRATIONS_PER_HOUR, Duration.ofHours(1));
         AuthResponse response = authService.register(request);
