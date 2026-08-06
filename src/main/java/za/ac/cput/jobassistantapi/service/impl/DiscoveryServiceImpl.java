@@ -23,6 +23,15 @@ import java.util.List;
 @Service
 public class DiscoveryServiceImpl implements DiscoveryService {
 
+    // Broad tech coverage rather than software-engineering-only, so the discovery feature
+    // is useful to more than just backend/frontend dev candidates.
+    private static final List<String> TECH_CATEGORIES = List.of(
+            "Software Engineering",
+            "Data and Analytics",
+            "Science and Engineering",
+            "Design and UX"
+    );
+
     private final MuseApiClient museApiClient;
     private final JobRepository jobRepository;
     private final JobApplicationRepository jobApplicationRepository;
@@ -47,11 +56,10 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        CV cv = cvRepository.findByUserId(user.getId())
+        cvRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Upload a CV first"));
 
-        // Hardcoded category — CV skills are dev-focused, so this always applies for your app
-        List<JsonNode> museJobs = museApiClient.fetchJobs("Software Engineering", "Entry Level");
+        List<JsonNode> museJobs = museApiClient.fetchJobs(TECH_CATEGORIES, "Entry Level");
 
         List<JobApplicationResponse> results = new ArrayList<>();
 
@@ -71,6 +79,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                                                 ? museJob.path("locations").get(0).path("name").asText()
                                                 : "Not specified"
                                 )
+                                .setPostingUrl(museJob.path("refs").path("landing_page").asText(null))
                                 .setSource(JobSource.MUSE)
                                 .build();
                         return jobRepository.save(newJob);
@@ -92,6 +101,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                         job.getTitle(),
                         job.getCompany(),
                         job.getLocation(),
+                        job.getPostingUrl(),
                         saved.getStatus(),
                         saved.getAppliedDate(),
                         saved.getCreatedAt()

@@ -44,6 +44,7 @@ public class JobServiceImpl implements JobService {
                 .setCompany(request.getCompany())
                 .setDescription(request.getDescription())
                 .setLocation(request.getLocation())
+                .setPostingUrl(request.getPostingUrl())
                 .setSource(JobSource.MANUAL)
                 .build();
 
@@ -109,6 +110,7 @@ public class JobServiceImpl implements JobService {
                 .setCompany(request.getCompany())
                 .setDescription(request.getDescription())
                 .setLocation(request.getLocation())
+                .setPostingUrl(request.getPostingUrl())
                 .build();
 
         Job savedJob = jobRepository.save(updatedJob);
@@ -118,6 +120,7 @@ public class JobServiceImpl implements JobService {
                 savedJob.getTitle(),
                 savedJob.getCompany(),
                 savedJob.getLocation(),
+                savedJob.getPostingUrl(),
                 application.getStatus(),
                 application.getAppliedDate(),
                 application.getCreatedAt()
@@ -143,6 +146,7 @@ public class JobServiceImpl implements JobService {
                 app.getJob().getTitle(),
                 app.getJob().getCompany(),
                 app.getJob().getLocation(),
+                app.getJob().getPostingUrl(),
                 app.getStatus(),
                 app.getAppliedDate(),
                 app.getCreatedAt()

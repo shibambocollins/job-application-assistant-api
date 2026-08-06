@@ -2,9 +2,6 @@ package za.ac.cput.jobassistantapi.service.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import za.ac.cput.jobassistantapi.dto.response.AuthResponse;
@@ -16,7 +13,6 @@ import za.ac.cput.jobassistantapi.service.GoogleAuthService;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.UUID;
 
 @Service
@@ -30,13 +26,11 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     public GoogleAuthServiceImpl(UserRepository userRepository,
                                   PasswordEncoder passwordEncoder,
                                   JwtService jwtService,
-                                  @Value("${google.oauth.client-id:}") String googleClientId) {
+                                  GoogleIdTokenVerifier verifier) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(googleClientId))
-                .build();
+        this.verifier = verifier;
     }
 
     @Override

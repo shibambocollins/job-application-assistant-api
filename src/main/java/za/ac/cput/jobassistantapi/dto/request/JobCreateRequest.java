@@ -15,6 +15,8 @@ public class JobCreateRequest {
 
     private String location;
 
+    private String postingUrl;
+
     public JobCreateRequest() {}
 
     public String getTitle() { return title; }
@@ -28,4 +30,7 @@ public class JobCreateRequest {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getPostingUrl() { return postingUrl; }
+    public void setPostingUrl(String postingUrl) { this.postingUrl = postingUrl; }
 }

@@ -21,9 +21,9 @@ public class MuseApiClient {
             .baseUrl("https://www.themuse.com")
             .build();
 
-    public List<JsonNode> fetchJobs(String category, String level) {
+    public List<JsonNode> fetchJobs(List<String> categories, String level) {
 
-        log.info("Fetching Muse jobs for category={} level={}", category, level);
+        log.info("Fetching Muse jobs for categories={} level={}", categories, level);
 
         List<JsonNode> jobs = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
@@ -31,7 +31,7 @@ public class MuseApiClient {
 
         for (int page = 0; page < pageCount && page < MAX_PAGES; page++) {
 
-            String response = fetchPage(category, level, page);
+            String response = fetchPage(categories, level, page);
 
             try {
                 JsonNode root = mapper.readTree(response);
@@ -51,14 +51,15 @@ public class MuseApiClient {
         return jobs;
     }
 
-    private String fetchPage(String category, String level, int page) {
+    private String fetchPage(List<String> categories, String level, int page) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/public/jobs")
-                        .queryParam("category", category)
-                        .queryParam("level", level)
-                        .queryParam("page", page)
-                        .build())
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/api/public/jobs")
+                            .queryParam("level", level)
+                            .queryParam("page", page);
+                    categories.forEach(category -> uriBuilder.queryParam("category", category));
+                    return uriBuilder.build();
+                })
                 .retrieve()
                 .bodyToMono(String.class)
                 .timeout(Duration.ofSeconds(30))

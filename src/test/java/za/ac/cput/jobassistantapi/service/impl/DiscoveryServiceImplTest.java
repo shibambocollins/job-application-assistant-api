@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,7 +85,7 @@ class DiscoveryServiceImplTest {
     void discoverJobs_newJob_createsJobAndApplication() throws Exception {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user()));
         when(cvRepository.findByUserId(1L)).thenReturn(Optional.of(new CV.Builder().setId(1L).build()));
-        when(museApiClient.fetchJobs("Software Engineering", "Entry Level"))
+        when(museApiClient.fetchJobs(anyList(), eq("Entry Level")))
                 .thenReturn(List.of(museJob("ext-1", "Junior Developer")));
 
         when(jobRepository.findByExternalId("ext-1")).thenReturn(Optional.empty());
@@ -109,7 +111,7 @@ class DiscoveryServiceImplTest {
     void discoverJobs_alreadyApplied_skipsDuplicateApplication() throws Exception {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user()));
         when(cvRepository.findByUserId(1L)).thenReturn(Optional.of(new CV.Builder().setId(1L).build()));
-        when(museApiClient.fetchJobs("Software Engineering", "Entry Level"))
+        when(museApiClient.fetchJobs(anyList(), eq("Entry Level")))
                 .thenReturn(List.of(museJob("ext-2", "Backend Dev")));
 
         Job existingJob = new Job.Builder().setId(20L).setExternalId("ext-2")
@@ -128,7 +130,7 @@ class DiscoveryServiceImplTest {
     void discoverJobs_existingJobNotYetApplied_createsApplicationWithoutRecreatingJob() throws Exception {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user()));
         when(cvRepository.findByUserId(1L)).thenReturn(Optional.of(new CV.Builder().setId(1L).build()));
-        when(museApiClient.fetchJobs("Software Engineering", "Entry Level"))
+        when(museApiClient.fetchJobs(anyList(), eq("Entry Level")))
                 .thenReturn(List.of(museJob("ext-3", "Full Stack Dev")));
 
         Job existingJob = new Job.Builder().setId(30L).setExternalId("ext-3")

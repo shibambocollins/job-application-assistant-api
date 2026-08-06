@@ -26,6 +26,8 @@ public class Job {
 
     private String location;
 
+    private String postingUrl;
+
     @Enumerated(EnumType.STRING)
     private JobSource source;
 
@@ -40,6 +42,7 @@ public class Job {
         this.company = builder.company;
         this.description = builder.description;
         this.location = builder.location;
+        this.postingUrl = builder.postingUrl;
         this.source = builder.source;
         this.fetchedAt = builder.fetchedAt;
     }
@@ -73,6 +76,10 @@ public class Job {
         return location;
     }
 
+    public String getPostingUrl() {
+        return postingUrl;
+    }
+
     public JobSource getSource() {
         return source;
     }
@@ -88,6 +95,7 @@ public class Job {
         private String company;
         private String description;
         private String location;
+        private String postingUrl;
         private JobSource source;
         private LocalDateTime fetchedAt;
 
@@ -121,6 +129,11 @@ public class Job {
             return this;
         }
 
+        public Builder setPostingUrl(String postingUrl) {
+            this.postingUrl = postingUrl;
+            return this;
+        }
+
         public Builder setSource(JobSource source) {
             this.source = source;
             return this;
@@ -138,6 +151,7 @@ public class Job {
             this.company = job.company;
             this.description = job.description;
             this.location = job.location;
+            this.postingUrl = job.postingUrl;
             this.source = job.source;
             this.fetchedAt = job.fetchedAt;
             return this;
