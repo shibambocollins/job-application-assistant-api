@@ -190,6 +190,30 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
+    void register_sameIpDifferentSourcePorts_shareRateLimitBucket() throws Exception {
+        // Azure's front door appends the client's ephemeral source port to X-Forwarded-For
+        // ("203.0.113.9:54321"), which differs on every connection from the same client. The
+        // limiter must key on the IP only, or every request looks like a distinct client.
+        String ip = uniqueIp();
+
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/auth/register")
+                            .header("X-Forwarded-For", ip + ":" + (40000 + i))
+                            .contentType("application/json")
+                            .content(objectMapper.writeValueAsString(Map.of(
+                                    "email", uniqueEmail(), "password", "TestPassword123", "fullName", "Port Test"))))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(post("/auth/register")
+                        .header("X-Forwarded-For", ip + ":49999")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", uniqueEmail(), "password", "TestPassword123", "fullName", "One Too Many"))))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
     void login_repeatedWrongPassword_eventuallyLocksOut() throws Exception {
         String email = uniqueEmail();
         register(email, "CorrectPassword123", "Lockout Test", uniqueIp());

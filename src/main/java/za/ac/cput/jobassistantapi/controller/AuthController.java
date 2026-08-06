@@ -112,12 +112,26 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Azure App Service (and most reverse proxies) put the real client IP in X-Forwarded-For, not getRemoteAddr(). */
+    /**
+     * Azure App Service (and most reverse proxies) put the real client IP in X-Forwarded-For, not
+     * getRemoteAddr(). Azure's front door appends the client's ephemeral source port to that entry
+     * (e.g. "203.0.113.77:54321"), which changes on every connection from the same client and would
+     * otherwise make the rate limiter key on something that's effectively unique per request. Strip it.
+     */
     private String clientIp(HttpServletRequest request) {
         String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
+        String ip = (forwardedFor != null && !forwardedFor.isBlank())
+                ? forwardedFor.split(",")[0].trim()
+                : request.getRemoteAddr();
+
+        int lastColon = ip.lastIndexOf(':');
+        if (lastColon > 0 && ip.indexOf(':') == lastColon && !ip.startsWith("[")) {
+            // Exactly one colon and not a bracketed IPv6 literal -> "ip:port", strip the port.
+            String portPart = ip.substring(lastColon + 1);
+            if (portPart.chars().allMatch(Character::isDigit)) {
+                ip = ip.substring(0, lastColon);
+            }
         }
-        return request.getRemoteAddr();
+        return ip;
     }
 }
