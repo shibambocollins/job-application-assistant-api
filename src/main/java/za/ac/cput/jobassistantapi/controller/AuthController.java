@@ -10,6 +10,9 @@ import za.ac.cput.jobassistantapi.dto.request.LoginRequest;
 import za.ac.cput.jobassistantapi.dto.request.RegisterRequest;
 import za.ac.cput.jobassistantapi.dto.request.ResetPasswordRequest;
 import za.ac.cput.jobassistantapi.dto.response.AuthResponse;
+import za.ac.cput.jobassistantapi.exception.ResourceNotFoundException;
+import za.ac.cput.jobassistantapi.model.User;
+import za.ac.cput.jobassistantapi.repository.UserRepository;
 import za.ac.cput.jobassistantapi.service.AuthService;
 import za.ac.cput.jobassistantapi.service.GoogleAuthService;
 import za.ac.cput.jobassistantapi.service.PasswordResetService;
@@ -22,13 +25,16 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
     private final GoogleAuthService googleAuthService;
+    private final UserRepository userRepository;
 
     public AuthController(AuthService authService,
                            PasswordResetService passwordResetService,
-                           GoogleAuthService googleAuthService) {
+                           GoogleAuthService googleAuthService,
+                           UserRepository userRepository) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.googleAuthService = googleAuthService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -60,9 +66,13 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUser(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         return ResponseEntity.ok(Map.of(
-                "email", authentication.getName(),
-                "authorities", authentication.getAuthorities()
+                "email", user.getEmail(),
+                "fullName", user.getFullName() == null ? "" : user.getFullName(),
+                "createdAt", user.getCreatedAt()
         ));
     }
 }

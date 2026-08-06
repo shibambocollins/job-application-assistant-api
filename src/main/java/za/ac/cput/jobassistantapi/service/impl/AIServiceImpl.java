@@ -67,15 +67,26 @@ public class AIServiceImpl implements AIService {
     public JobFitResult analyzeJobFit(String cvText, String jobDescription) {
 
         String prompt = """
-            Compare this CV against this job description and assess fit.
+            Compare this CV against this job description and assess overall fit. Judge this holistically, not
+            just on technical skills. Weigh all of the following:
+            - Technical skills AND soft skills / core competencies the role calls for
+            - Relevant work experience (roles, responsibilities, seniority, years, industry relevance)
+            - Educational background, where the job specifies or implies a requirement
+            - Location fit, if the job lists a location and the CV indicates a location or remote availability
+            - Whether the CV's structure would parse cleanly through an Applicant Tracking System (ATS) —
+              clear section headings, no tables/columns/text-boxes/graphics, standard fonts, consistent
+              formatting. Flag structural issues here as suggestions if they'd hurt ATS parsing, separate from
+              content gaps.
+
             Return ONLY valid JSON, no markdown, no explanation, in this exact shape:
             {
               "matchScore": 0,
-              "missingSkills": ["skill the job needs that the CV lacks"],
-              "strengths": ["relevant CV strength for this job"],
-              "suggestions": ["concrete improvement suggestion"]
+              "missingSkills": ["a skill, experience gap, education gap, or competency the job needs that the CV lacks or doesn't clearly demonstrate"],
+              "strengths": ["a relevant CV strength for this job — skill, experience, education, or competency"],
+              "suggestions": ["a concrete improvement suggestion — content gaps, missing keywords, or CV structure/ATS-friendliness issues"]
             }
-            matchScore is an integer from 0 to 100 estimating how well the CV fits the job.
+            matchScore is an integer from 0 to 100 estimating overall fit across skills, experience, education,
+            competencies, and location combined.
 
             CV text:
             %s
