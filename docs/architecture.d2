@@ -1,0 +1,93 @@
+direction: down
+
+frontend: "Frontend" {
+  style.fill: "#eef4ff"
+  style.stroke: "#4c6fff"
+
+  react: "React SPA\nVite + TypeScript + Tailwind CSS" {
+    icon: https://icons.terrastruct.com/dev/react.svg
+    shape: image
+  }
+}
+
+backend: "Backend — Spring Boot" {
+  style.fill: "#f3f0ff"
+  style.stroke: "#7c5cff"
+
+  spring: "Spring Boot" {
+    icon: https://icons.terrastruct.com/dev/java.svg
+    shape: image
+  }
+
+  api: "REST Controllers\nAuth / CV / Job / Analysis / Chat"
+
+  services: "Service Layer" {
+    style.fill: "#ffffff"
+
+    AuthService
+    CVService
+    JobService
+    DiscoveryService
+    AIService
+    AnalysisService
+    ChatService
+  }
+
+  repos: "Repository Layer\nSpring Data JPA"
+}
+
+external: "External APIs" {
+  style.fill: "#fff4e5"
+  style.stroke: "#ff9800"
+
+  gemini: "Google Gemini API\n(gemini-flash-latest)" {
+    icon: https://icons.terrastruct.com/gcp/Products%20and%20services/AI%20and%20Machine%20Learning/Cloud%20AutoML.svg
+    shape: image
+  }
+
+  muse: "The Muse API" {
+    icon: https://icons.terrastruct.com/gcp/Products%20and%20services/Management%20Tools/Cloud%20APIs.svg
+    shape: image
+  }
+}
+
+storage: "Storage" {
+  style.fill: "#e8f9ee"
+  style.stroke: "#2e7d32"
+
+  sql: "Azure SQL Database" {
+    icon: https://icons.terrastruct.com/azure/Databases%20Service%20Color/SQL%20Databases.svg
+    shape: image
+  }
+
+  blob: "Azure Blob Storage" {
+    icon: https://icons.terrastruct.com/azure/Storage%20Service%20Color/Blob%20Storage.svg
+    shape: image
+  }
+}
+
+frontend.react -> backend.api: "HTTPS, JWT bearer token"
+
+backend.api -> backend.services.AuthService
+backend.api -> backend.services.CVService
+backend.api -> backend.services.JobService
+backend.api -> backend.services.DiscoveryService
+backend.api -> backend.services.AnalysisService
+backend.api -> backend.services.ChatService
+
+backend.services.CVService -> backend.services.AIService
+backend.services.AnalysisService -> backend.services.AIService
+backend.services.ChatService -> backend.services.AIService
+
+backend.services.AuthService -> backend.repos
+backend.services.CVService -> backend.repos
+backend.services.JobService -> backend.repos
+backend.services.DiscoveryService -> backend.repos
+backend.services.AnalysisService -> backend.repos
+backend.services.ChatService -> backend.repos
+
+backend.repos -> storage.sql
+
+backend.services.CVService -> storage.blob: "upload / delete CV file"
+backend.services.AIService -> external.gemini: "HTTPS"
+backend.services.DiscoveryService -> external.muse: "HTTPS"

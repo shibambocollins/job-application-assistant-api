@@ -1,6 +1,6 @@
 # Architecture
 
-This document covers the data model, system architecture, and a representative request flow for the Job Assistant AI backend. Diagrams are Mermaid, rendered natively by GitHub — no image export or external tooling needed.
+This document covers the data model, system architecture, and a representative request flow for the Job Assistant AI backend. The ERD and sequence diagram are Mermaid, rendered natively by GitHub — no image export needed. The system architecture diagram uses real service icons ([Azure](https://icons.terrastruct.com), [React](https://icons.terrastruct.com), [Java](https://icons.terrastruct.com)) via [D2](https://d2lang.com), so it's a pre-rendered SVG checked into this repo instead.
 
 All three diagrams were built by reading the actual entity, service, and controller classes rather than the original design notes, so a couple of details below differ slightly from earlier planning docs. Those are called out where relevant.
 
@@ -84,65 +84,13 @@ erDiagram
 
 ## 2. System Architecture
 
-```mermaid
-flowchart TD
-    subgraph FE["Frontend"]
-        React["React SPA<br/>Vite + TypeScript + Tailwind CSS"]
-    end
+![System architecture diagram: React frontend calling the Spring Boot REST API over HTTPS with a JWT bearer token, fanning out to the seven services in the service layer, which go through a shared repository layer down to Azure SQL Database, with CVService also reaching Azure Blob Storage, AIService reaching Google Gemini, and DiscoveryService reaching The Muse API.](architecture.svg)
 
-    subgraph BE["Backend — Spring Boot"]
-        Controllers["REST Controllers<br/>Auth / CV / Job / Analysis / Chat"]
-
-        subgraph SVC["Service Layer"]
-            AuthService
-            CVService
-            JobService
-            DiscoveryService
-            AIService
-            AnalysisService
-            ChatService
-        end
-
-        Repos["Repository Layer<br/>Spring Data JPA"]
-    end
-
-    subgraph EXT["External APIs"]
-        Gemini["Google Gemini API<br/>gemini-flash-latest"]
-        Muse["The Muse API"]
-    end
-
-    subgraph STORE["Storage"]
-        SQL[("Azure SQL Database")]
-        Blob[("Azure Blob Storage")]
-    end
-
-    React -->|"HTTPS, JWT bearer token"| Controllers
-
-    Controllers --> AuthService
-    Controllers --> CVService
-    Controllers --> JobService
-    Controllers --> DiscoveryService
-    Controllers --> AnalysisService
-    Controllers --> ChatService
-
-    CVService --> AIService
-    AnalysisService --> AIService
-    ChatService --> AIService
-
-    AuthService --> Repos
-    CVService --> Repos
-    JobService --> Repos
-    DiscoveryService --> Repos
-    AnalysisService --> Repos
-    ChatService --> Repos
-
-    Repos --> SQL
-    CVService -->|"upload / delete CV file"| Blob
-    AIService -->|"HTTPS"| Gemini
-    DiscoveryService -->|"HTTPS"| Muse
-```
+Source: [`docs/architecture.d2`](architecture.d2), rendered with [D2](https://d2lang.com) (`d2 docs/architecture.d2 docs/architecture.svg`). Regenerate it the same way after any architectural change — both the source and the rendered SVG are committed so the diagram never depends on a build step to view.
 
 `JobService` covers manual job CRUD and application status updates; `DiscoveryService` covers auto-discovery via Muse (it delegates the actual HTTP calls to a `MuseApiClient`, omitted here as an implementation detail of the same service). `CVService` similarly delegates the Blob Storage calls to a `BlobStorageService` — shown here as a direct edge for clarity, since architecturally it's still "the CV layer talks to Blob Storage."
+
+No icon exists for Spring Boot or Gemini specifically in the [Terrastruct icon set](https://icons.terrastruct.com), so the diagram uses the Java icon for the Spring Boot node and Google Cloud's generic AI/ML icon for the Gemini node — both are the closest same-vendor-family fallback rather than an exact product icon.
 
 ---
 
