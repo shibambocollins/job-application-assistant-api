@@ -146,4 +146,10 @@ Registration and password-reset requests are rate-limited (5/hour per IP) to pre
 
 ---
 
+## Architecture
+
+For the full entity-relationship diagram, a system architecture diagram (frontend → API → services → external APIs/storage), and a sequence diagram walking through the CV upload request end to end, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. All three are Mermaid diagrams built directly from the current entity/service/controller code, so they reflect what's actually implemented rather than the original design plan.
+
+---
+
 Built by Collins (Ntsobokwane Collins Shibambo) — final-year Diploma in ICT Application Development student at CPUT.
