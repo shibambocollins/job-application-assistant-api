@@ -48,6 +48,8 @@ AI-powered job search assistant. Upload your CV, get real tech job listings rank
 ### Prerequisites
 - JDK 21+
 - A Google Gemini API key (free tier is fine)
+- An Azure Storage account with a Blob container (the app won't boot without `azure.storage.connection-string` — there's no local-disk fallback)
+- Optional: a Gmail account with an [app password](https://myaccount.google.com/apppasswords) for the forgot-password email flow, and a Google OAuth client ID for Google Sign-In — the app boots without these, but those two features won't work
 
 No local database setup needed — the `dev` profile runs on an in-memory H2 database by default.
 
@@ -61,8 +63,18 @@ cd job-application-assistant-api
 cat > src/main/resources/application-secret.properties << 'EOF'
 jwt.secret=your-local-dev-secret-change-this
 gemini.api.key=your-gemini-api-key
+gemini.model=gemini-flash-latest
 azure.storage.connection-string=your-azure-blob-connection-string
+azure.storage.container-name=cv-files
 google.oauth.client-id=your-google-oauth-client-id
+
+# Only needed for the forgot-password email flow — the app boots fine without
+# spring.mail.host/port, but spring.mail.username has no default and is required
+# at startup even if you never trigger a password reset.
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-gmail-address
+spring.mail.password=your-gmail-app-password
 EOF
 
 ./mvnw spring-boot:run
@@ -91,7 +103,7 @@ GET    /cv/my-cv                   # Get your CV + extracted data
 GET    /jobs                       # List your tracked applications
 POST   /jobs                       # Add a job manually
 PUT    /jobs/{id}                  # Update job details
-PATCH  /jobs/{id}/status            # Update application status
+PATCH  /jobs/{id}/status           # Update application status
 DELETE /jobs/{id}                  # Remove a tracked application
 POST   /jobs/discover              # Auto-discover jobs via The Muse API
 
@@ -99,7 +111,7 @@ POST   /jobs/{id}/analysis         # Run AI fit analysis for a job
 GET    /jobs/{id}/analysis         # Get the latest analysis for a job
 
 POST   /chat                       # Send a chat message
-GET    /chat/history                # Chat history
+GET    /chat/history                # Chat history for the current user
 ```
 
 All routes except `/auth/register`, `/auth/login`, `/auth/google`, `/auth/forgot-password`, and `/auth/reset-password` require `Authorization: Bearer <token>`.
@@ -148,7 +160,7 @@ Registration and password-reset requests are rate-limited (5/hour per IP) to pre
 
 ## Architecture
 
-For the full entity-relationship diagram, a system architecture diagram (frontend → API → services → external APIs/storage), and a sequence diagram walking through the CV upload request end to end, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. All three are Mermaid diagrams built directly from the current entity/service/controller code, so they reflect what's actually implemented rather than the original design plan.
+For the full entity-relationship diagram, a system architecture diagram (frontend → API → services → external APIs/storage, with real service icons), and a sequence diagram walking through the CV upload request end to end, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. All three were built directly from the current entity/service/controller code, so they reflect what's actually implemented rather than the original design plan.
 
 ---
 
